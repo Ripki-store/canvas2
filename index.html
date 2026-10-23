@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Editor Layout Canvas</title>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#e8eaf0;--pn:#fff;--ink:#161a26;--mu:#667085;--ac:#2f4bd6;--on:#fff;--ln:#d5d9e4;--fi:#f3f4f8;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1117;--pn:#1a1d27;--ink:#e9ecf5;--mu:#98a0b5;--ac:#8ea2ff;--on:#0e1330;--ln:#2d3243;--fi:#12141c;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1117;--pn:#1a1d27;--ink:#e9ecf5;--mu:#98a0b5;--ac:#8ea2ff;--on:#0e1330;--ln:#2d3243;--fi:#12141c;color-scheme:dark}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{font:14px/1.4 'Schibsted Grotesk',system-ui,sans-serif;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+header{display:flex;gap:8px;align-items:center;padding:8px 14px;background:var(--pn);border-bottom:1px solid var(--ln);flex-wrap:wrap}
+h1{font-size:16px;margin:0;flex:1;font-weight:700;white-space:nowrap}
+button{font:inherit;border:1px solid var(--ln);background:var(--pn);color:var(--ink);border-radius:8px;padding:7px 12px;cursor:pointer;white-space:nowrap}
+button:hover{border-color:var(--ac)}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+button.pri{background:var(--ac);border-color:var(--ac);color:var(--on);font-weight:600}
+main{flex:1;min-height:0;display:grid;grid-template-columns:232px 1fr 292px}
+aside{background:var(--pn);overflow:auto;padding:12px;display:flex;flex-direction:column;gap:14px}
+#L{border-right:1px solid var(--ln)}#R{border-left:1px solid var(--ln)}
+h2{font-size:13px;margin:0 0 6px;font-weight:700}
+#stage{display:flex;align-items:center;justify-content:center;overflow:auto;padding:16px;min-width:0;min-height:0}#mid{display:flex;flex-direction:column;min-width:0;min-height:0}#stage{flex:1;align-items:flex-start;justify-content:flex-start}#cv{margin:auto}#tb .ck{padding:0;align-self:center}.ly .t{margin-left:auto;display:flex;gap:2px}.ly .t span{cursor:pointer;padding:0 4px}.sw{width:26px;height:26px;min-height:0!important;padding:0;border-radius:50%}.pi{display:flex;gap:6px;align-items:center;border:1px solid var(--ln);border-radius:8px;padding:6px 8px;margin-bottom:5px}.pi b{flex:1;min-width:0;overflow-wrap:anywhere}.pi small{display:block;color:var(--mu);font-weight:400}#tb{display:flex;gap:6px;padding:8px 12px;background:var(--pn);border-bottom:1px solid var(--ln);flex-wrap:wrap;align-items:center}#tb .sp{flex:1}#hint{margin:0;padding:6px 12px;font-size:12px;color:var(--mu);background:var(--pn);border-top:1px solid var(--ln)}
+#cv{display:block;background:#fff;box-shadow:0 4px 22px #0003;touch-action:none;cursor:default;flex:none}
+.g{display:grid;grid-template-columns:1fr 1fr;gap:8px}.full{grid-column:1/-1}
+label{display:flex;flex-direction:column;font-size:12px;color:var(--mu);gap:3px}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--fi);border:1px solid var(--ln);border-radius:6px;padding:6px 8px;min-width:0;width:100%}
+input[type=color]{padding:2px;height:34px}input[type=checkbox]{width:auto}
+label.ck{flex-direction:row;align-items:center;gap:6px;color:var(--ink);align-self:end;padding-bottom:7px}
+.row{display:flex;gap:6px;flex-wrap:wrap}.mu{color:var(--mu);margin:0}
+.ly{display:flex;gap:8px;align-items:center;padding:6px 8px;border:1px solid var(--ln);border-radius:8px;margin-bottom:5px;cursor:pointer}
+.ly.on{border-color:var(--ac);background:var(--fi)}.ly i{font-style:normal;width:18px;text-align:center;color:var(--mu)}.ly b{font-weight:600;overflow:hidden;text-overflow:ellipsis}
+#dlg{position:fixed;inset:0;background:#000a;display:none;z-index:9;padding:16px}#dlg.on{display:flex}
+.card{margin:auto;width:min(820px,100%);height:min(90%,720px);background:var(--pn);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+#code{flex:1;font:12.5px/1.55 ui-monospace,Menlo,Consolas,monospace;white-space:pre;tab-size:2;resize:none}
+@media(max-width:900px){body{overflow:auto}main{display:flex;flex-direction:column;flex:none}#mid{order:-1;position:sticky;top:0;z-index:3;height:60vh;flex:none;background:var(--bg)}#hint{display:none}#R{order:0;border:0;border-top:1px solid var(--ln)}#L{order:1;border:0;border-top:1px solid var(--ln)}input,select,textarea{font-size:16px}}@media(pointer:coarse){button{min-height:42px}}
+</style></head><body>
+<header><h1>Editor Layout Canvas</h1><button id="pv0">Preview</button><button id="iJ">Import JSON</button><button id="eJ">Export JSON</button><button id="eC" class="pri">Export Node.js Code</button></header>
+<main>
+<aside id="L">
+
+ <section><h2>Kanvas</h2><div class="g"><label>Lebar (px)<input id="cw" type="number" min="1"></label><label>Tinggi (px)<input id="ch" type="number" min="1"></label>
+ <label class="full">Warna latar<input id="bgc" type="color" value="#ffffff"></label><label class="full">Preset ukuran<select id="pre"><option value="">Pilih preset…</option><option value="2000x1414">Sertifikat 2000×1414</option><option value="3508x2480">A4 landscape 3508×2480</option><option value="2480x3508">A4 portrait 2480×3508</option><option value="1920x1080">1920×1080</option><option value="1080x1080">1080×1080</option><option value="1080x1920">1080×1920</option></select></label><div class="full row"><button id="bgb">Upload background</button><button id="bgx">Hapus</button></div><p class="mu full" id="bgn"></p></div></section>
+ <section><h2>Preset</h2><div class="g"><input id="pn" class="full" placeholder="Nama preset, mis. sertifikat-a"><div class="full row"><button id="ps" class="pri">Simpan preset</button><button id="pa">Export pack</button><button id="pg">Panduan API</button></div><label class="ck full" style="padding:0"><input id="pbg" type="checkbox">Sertakan background di pack</label><div id="pl" class="full"></div></div></section>
+ <section><h2>Layer</h2><div id="ly"></div></section>
+</aside>
+<div id="mid"><div id="tb"><button data-add="text" class="pri">+ Teks</button><button data-add="rect">+ Gambar kotak</button><button data-add="ellipse">+ Gambar lingkaran</button><select id="ash" style="width:auto"><option value="">+ Bentuk</option><option value="rect">Persegi</option><option value="ellipse">Lingkaran</option><option value="tri">Segitiga</option><option value="star">Bintang</option></select><span class="sp"></span><label class="ck"><input id="sn" type="checkbox" checked>Snap</label><label class="ck"><input id="gr" type="checkbox">Grid</label><button id="zo" title="Perkecil">−</button><button id="zf" title="Pas layar">Pas</button><button id="zi" title="Perbesar">+</button><button id="un" title="Urungkan (Ctrl+Z)">↶ Urungkan</button><button id="re" title="Ulangi (Ctrl+Y)">↷ Ulangi</button></div><div id="stage"><canvas id="cv"></canvas></div><p id="hint">Klik objek untuk memilih, lalu seret untuk menggeser. Klik dua kali pada teks untuk mengedit isinya. Tombol panah menggeser 1 px (dengan Shift 10 px).</p></div>
+<aside id="R"><h2>Properti</h2><div id="pp"></div></aside>
+</main>
+<input type="file" id="file" accept="image/*" hidden>
+<datalist id="fonts"><option>Arial</option><option>Helvetica</option><option>Georgia</option><option>Times New Roman</option><option>Verdana</option><option>Courier New</option><option>Impact</option><option>sans-serif</option><option>serif</option></datalist>
+<div id="dlg"><div class="card"><div class="row" style="align-items:center"><b id="dt" style="flex:1"></b><button id="ap" class="pri" hidden>Terapkan</button><button id="cp" class="pri">Salin</button><button id="cl">Tutup</button></div><textarea id="code" readonly spellcheck="false"></textarea><img id="pv" hidden alt="Preview" style="flex:1;min-height:0;object-fit:contain;background:#fff"></div></div>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+const S={W:2000,H:1414,bg:null,els:[],sel:null,n:0};
+const cv=$('#cv'),c=cv.getContext('2d'),mc=document.createElement('canvas').getContext('2d');
+let drag=null,upT=null;const HS=matchMedia('(pointer:coarse)').matches?18:10;let ZM=1,GA=0,NOOV=0;S.bgc='#ffffff';const SN=()=>$('#sn').checked?6:-1;
+let HIST=[],hi=-1;
+const cl=()=>({W:S.W,H:S.H,els:S.els.map(e=>({...e}))});
+function commit(){const s=cl(),j=JSON.stringify(s);if(hi>=0&&HIST[hi].j===j)return;HIST=HIST.slice(0,hi+1);HIST.push({s,j});if(HIST.length>100)HIST.shift();hi=HIST.length-1}
+function go(d){const i=hi+d;if(i<0||i>=HIST.length)return;hi=i;const s=HIST[i].s;S.W=s.W;S.H=s.H;S.els=s.els.map(e=>({...e}));if(!sel())S.sel=null;$('#cw').value=S.W;$('#ch').value=S.H;fit();panel();layers();draw()}
+const fam=f=>/\s/.test(f)&&!/^["']/.test(f)?`"${f}"`:f,fnt=e=>`${e.italic?'italic ':''}${e.bold?'bold ':''}${e.size}px ${fam(e.family)}`;
+const lhOf=e=>e.lh||Math.round(e.size*1.2),lines=e=>String(e.content).split('\n'),sel=()=>S.els.find(e=>e.id===S.sel);
+function box(e){if(e.type!=='text')return{w:e.width,h:e.height};mc.font=fnt(e);const L=lines(e);return{w:Math.max(...L.map(l=>mc.measureText(l).width)),h:L.length*lhOf(e)}}
+function uniq(b){let i=1,n=b;while(S.els.some(e=>e.name===n))n=b+(++i);return n}
+
+/* ===== Render (dipakai editor; urutan & API sama dengan kode export) ===== */
+function draw(){
+ if(cv.width!==S.W)cv.width=S.W;if(cv.height!==S.H)cv.height=S.H;
+ c.clearRect(0,0,S.W,S.H);c.fillStyle=S.bgc||'#ffffff';c.fillRect(0,0,S.W,S.H);
+ if(S.bg)c.drawImage(S.bg.img,0,0,S.W,S.H);
+ for(const e of S.els){
+  if(e.hide)continue;c.globalAlpha=(e.op??100)/100;if(e.type==='shape')drawShape(c,e);else if(e.type==='text'){c.textAlign='left';c.textBaseline='top';c.font=fnt(e);c.fillStyle=e.color;const lh=lhOf(e);if(e.blur||e.shx||e.shy){c.shadowColor=e.shc||'rgba(0,0,0,0.5)';c.shadowBlur=e.blur||0;c.shadowOffsetX=e.shx||0;c.shadowOffsetY=e.shy||0}lines(e).forEach((l,i)=>{const yy=e.y+i*lh;if(e.stw){c.strokeStyle=e.stc||'#000000';c.lineWidth=e.stw;c.lineJoin='round';c.strokeText(l,e.x,yy)}c.fillText(l,e.x,yy)});c.shadowColor='transparent';c.shadowBlur=0;c.shadowOffsetX=0;c.shadowOffsetY=0}
+  else{c.save();if(e.shape==='ellipse'){c.beginPath();c.ellipse(e.x+e.width/2,e.y+e.height/2,e.width/2,e.height/2,0,0,Math.PI*2);c.clip()}else if(e.radius){trace(c,e);c.clip()}if(e.flipH||e.flipV){c.translate(e.x+(e.flipH?e.width:0),e.y+(e.flipV?e.height:0));c.scale(e.flipH?-1:1,e.flipV?-1:1);c.translate(-e.x,-e.y)}
+   if(e.img)c.drawImage(e.img,e.x,e.y,e.width,e.height);else{c.fillStyle='#c5cce0';c.fillRect(e.x,e.y,e.width,e.height)}c.restore();if(e.bw)border(c,e)}}
+ overlay()}
+function overlay(){c.globalAlpha=1;if(NOOV)return;const e=sel(),k=S.W/cv.getBoundingClientRect().width||1;if($('#gr').checked){c.save();c.lineWidth=k;c.strokeStyle='#8a93ad66';c.beginPath();for(let x=100;x<S.W;x+=100){c.moveTo(x,0);c.lineTo(x,S.H)}for(let y=100;y<S.H;y+=100){c.moveTo(0,y);c.lineTo(S.W,y)}c.stroke();c.restore()}if(!e)return;const b=box(e),ac='#2f4bd6';
+ c.save();c.lineWidth=1.5*k;c.strokeStyle=ac;c.strokeRect(e.x,e.y,b.w,b.h);
+ if(e.type!=='text'){const h=HS*k;c.fillStyle='#fff';c.fillRect(e.x+b.w-h/2,e.y+b.h-h/2,h,h);c.strokeRect(e.x+b.w-h/2,e.y+b.h-h/2,h,h)}
+ if(drag){c.setLineDash([6*k,5*k]);c.strokeStyle='#12a8a8';c.beginPath();c.moveTo(S.W/2,0);c.lineTo(S.W/2,S.H);c.moveTo(0,S.H/2);c.lineTo(S.W,S.H/2);c.stroke();
+  c.strokeStyle='#e5367a';c.beginPath();for(const x of[e.x,e.x+b.w/2,e.x+b.w]){c.moveTo(x,0);c.lineTo(x,S.H)}for(const y of[e.y,e.y+b.h/2,e.y+b.h]){c.moveTo(0,y);c.lineTo(S.W,y)}c.stroke();
+  c.setLineDash([]);c.fillStyle='#e5367a';c.font=`${13*k}px sans-serif`;c.textBaseline='bottom';c.fillText(`x ${e.x}  y ${e.y}`,e.x,Math.max(e.y-5*k,16*k))}
+ c.restore()}
+function fit(){const s=$('#stage'),z=Math.min((s.clientWidth-32)/S.W,(s.clientHeight-32)/S.H);const Z=z*ZM;cv.style.width=Math.max(60,S.W*Z)+'px';cv.style.height=Math.max(60,S.H*Z)+'px';$('#zf').textContent=Math.round(Z*100)+'%'}
+
+/* ===== Drag & drop (koordinat kiri-atas, bulat) ===== */
+const pos=ev=>{const r=cv.getBoundingClientRect();return{x:(ev.clientX-r.left)*S.W/r.width,y:(ev.clientY-r.top)*S.H/r.height}};
+function snap(v,w,T,t){let b=null;for(const o of[0,w/2,w])for(const g of T){const d=g-(v+o);if(Math.abs(d)<=t&&(b===null||Math.abs(d)<Math.abs(b)))b=d}return b===null?v:Math.round(v+b)}
+cv.onpointerdown=ev=>{const p=pos(ev),k=S.W/cv.getBoundingClientRect().width,s=sel();
+ if(s&&s.type!=='text'&&Math.abs(p.x-(s.x+s.width))<HS*k&&Math.abs(p.y-(s.y+s.height))<HS*k)drag={m:'rs'};
+ else{let h=null;for(let i=S.els.length-1;i>=0;i--){const e=S.els[i],b=box(e);if(!e.hide&&p.x>=e.x&&p.x<=e.x+b.w&&p.y>=e.y&&p.y<=e.y+b.h){h=e;break}}
+  select(h?h.id:null);if(!h||h.lock)return;drag={m:'mv',dx:p.x-h.x,dy:p.y-h.y}}
+ cv.setPointerCapture(ev.pointerId);draw()};
+cv.onpointermove=ev=>{if(!drag)return;const e=sel(),p=pos(ev),k=S.W/cv.getBoundingClientRect().width;
+ if(drag.m==='rs'){let w=Math.max(10,Math.round(p.x-e.x)),h=Math.max(10,Math.round(p.y-e.y));if(ev.shiftKey&&e.img)h=Math.round(w*e.img.naturalHeight/e.img.naturalWidth);e.width=w;e.height=h}
+ else{const b=box(e);e.x=snap(Math.round(p.x-drag.dx),b.w,[0,S.W/2,S.W],SN()*k);e.y=snap(Math.round(p.y-drag.dy),b.h,[0,S.H/2,S.H],SN()*k)}
+ sync();draw()};
+cv.onpointerup=cv.onpointercancel=()=>{drag=null;commit();draw()};cv.ondblclick=()=>{const t=$('#pp [data-k="content"]');if(t){t.focus();t.select()}};
+
+/* ===== Panel properti ===== */
+const N=(l,k,v)=>`<label>${l}<input data-k="${k}" type="number" value="${v}"></label>`;
+function panel(){const e=sel(),p=$('#pp');if(!e){p.innerHTML='<p class="mu">Pilih objek di kanvas atau di daftar layer untuk mengubah propertinya.</p>';return}
+ let h=`<div class="g"><label class="full">Nama (dipakai di JSON & kode)<input data-k="name" value="${esc(e.name)}"></label>`;
+ if(e.type==='text')h+=`<label class="full">Teks<textarea data-k="content" rows="2">${esc(e.content)}</textarea></label>${N('X','x',e.x)}${N('Y','y',e.y)}
+  <label class="full">Font<input data-k="family" list="fonts" value="${esc(e.family)}"></label>${N('Ukuran (px)','size',e.size)}<label class="ck"><input data-k="bold" type="checkbox" ${e.bold?'checked':''}>Tebal</label><label class="ck"><input data-k="italic" type="checkbox" ${e.italic?'checked':''}>Miring</label>${N('Jarak baris (px)','lh',lhOf(e))}
+  <label class="full">Warna<input data-k="color" type="color" value="${e.color}"></label>${sw('color')}${N('Outline (px)','stw',e.stw||0)}<label>Warna outline<input data-k="stc" type="color" value="${e.stc||'#000000'}"></label>${N('Blur bayangan','blur',e.blur||0)}<label>Warna bayangan<input data-k="shc" type="color" value="${e.shc||'#000000'}"></label>${N('Bayangan X','shx',e.shx||0)}${N('Bayangan Y','shy',e.shy||0)}<div class="full row"><button data-act="AA">HURUF BESAR</button><button data-act="aa">huruf kecil</button></div>`;
+ else h+=`${N('X','x',e.x)}${N('Y','y',e.y)}${N('Lebar','width',e.width)}${N('Tinggi','height',e.height)}
+  <label class="full">Bentuk<select data-k="shape"><option value="rect" ${e.shape==='rect'?'selected':''}>Kotak</option><option value="ellipse" ${e.shape==='ellipse'?'selected':''}>Lingkaran / ellipse</option>${e.type==='shape'?['tri','star'].map(v=>`<option value="${v}" ${e.shape===v?'selected':''}>${{tri:'Segitiga',star:'Bintang'}[v]}</option>`).join(''):''}</select></label>
+  ${e.type==='shape'?SHP(e):IMG(e)}<p class="mu full">Tarik titik di pojok kanan-bawah untuk mengubah ukuran (Shift = rasio asli).</p>`;
+ h+=`<div class="full row"><button data-act="cx">Tengahkan horizontal</button><button data-act="cy">Tengahkan vertikal</button></div><div class="full row"><button data-act="aL">Ke kiri</button><button data-act="aR">Ke kanan</button><button data-act="aT">Ke atas</button><button data-act="aB">Ke bawah</button></div>
+  ${N('Opasitas (%)','op',e.op??100)}<p class="mu full" id="meas"></p><div class="full row"><button data-act="up">Naik</button><button data-act="dn">Turun</button><button data-act="top">Paling depan</button><button data-act="bot">Paling belakang</button><button data-act="dup">Duplikat</button><button data-act="del">Hapus</button></div></div>`;
+ p.innerHTML=h;sync()}
+function sync(){const e=sel();if(!e)return;for(const k of['x','y','width','height']){const i=$(`#pp [data-k="${k}"]`);if(i&&document.activeElement!==i)i.value=e[k]}
+ const m=$('#meas'),b=box(e);if(m)m.textContent=`Kotak objek: ${Math.round(b.w)} × ${Math.round(b.h)} px`}
+$('#pp').addEventListener('input',ev=>{const t=ev.target,k=t.dataset.k,e=sel();if(!k||!e)return;let v;
+ if(t.type==='checkbox')v=t.checked;else if(t.type==='number'){v=Math.round(+t.value||0);if(['size','width','height','lh'].includes(k))v=Math.max(1,v);if(k==='op')v=Math.min(100,Math.max(0,v));if(['radius','bw','sw','blur','stw'].includes(k))v=Math.max(0,v)}
+ else if(k==='name'){v=t.value.replace(/\W/g,'_');if(v!==t.value)t.value=v;if(!v)return}else v=t.value;
+ e[k]=v;if(k==='name')layers();sync();draw()});
+$('#pp').addEventListener('change',()=>commit());
+$('#pp').addEventListener('click',ev=>{const a=ev.target.dataset.act,e=sel();if(!a||!e)return;const i=S.els.indexOf(e);
+ if(a==='cx'){e.x=Math.round(S.W/2-box(e).w/2)}
+ else if(a==='cy'){e.y=Math.round(S.H/2-box(e).h/2)}
+ else if(a==='fh')e.flipH=!e.flipH;else if(a==='fv')e.flipV=!e.flipV;else if(a==='fit'){e.x=0;e.y=0;e.width=S.W;e.height=S.H}else if(a==='nat'){if(e.img){e.width=e.img.naturalWidth;e.height=e.img.naturalHeight}}else if(a==='AA'){e.content=e.content.toUpperCase();panel()}else if(a==='aa'){e.content=e.content.toLowerCase();panel()}else if(a==='top')S.els.push(S.els.splice(i,1)[0]);else if(a==='bot')S.els.unshift(S.els.splice(i,1)[0]);else if(a==='aL')e.x=0;else if(a==='aR')e.x=Math.round(S.W-box(e).w);else if(a==='aT')e.y=0;else if(a==='aB')e.y=Math.round(S.H-box(e).h);
+ else if(a==='up'&&i<S.els.length-1)S.els.splice(i+1,0,S.els.splice(i,1)[0]);
+ else if(a==='dn'&&i>0)S.els.splice(i-1,0,S.els.splice(i,1)[0]);
+ else if(a==='dup'){const d={...e,id:++S.n,name:uniq(e.name.replace(/\d+$/,'')||'obj'),x:e.x+20,y:e.y+20};S.els.push(d);S.sel=d.id;panel()}
+ else if(a==='del'){S.els.splice(i,1);S.sel=null;panel()}
+ else if(a==='img'){upT=e.id;$('#file').click()}
+ if(a!=='img')commit();
+ layers();sync();draw()});
+
+/* ===== Layer, tambah objek, upload ===== */
+function layers(){$('#ly').innerHTML=[...S.els].reverse().map(e=>`<div class="ly ${e.id===S.sel?'on':''}" data-id="${e.id}"><i>${e.type==='text'?'T':e.shape==='ellipse'?'◯':'▢'}</i><b>${esc(e.name)}</b><span class="t"><span data-t="hide" title="Tampil/sembunyi (yang disembunyikan tidak ikut di-export)">${e.hide?'○':'◉'}</span><span data-t="lock" title="Kunci posisi">${e.lock?'🔒':'🔓'}</span></span></div>`).join('')||'<p class="mu">Belum ada objek.</p>'}
+$('#ly').onclick=ev=>{const d=ev.target.closest('[data-id]');if(!d)return;const e=S.els.find(x=>x.id===+d.dataset.id),t=ev.target.dataset.t;if(t&&e){e[t]=!e[t];commit();layers();draw();return}select(+d.dataset.id)};
+function select(id){S.sel=id;panel();layers();draw()}
+document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{const t=b.dataset.add,id=++S.n;let e;
+ if(t==='text')e={id,type:'text',name:uniq('text'),content:'Teks baru',x:100,y:100,family:'Arial',size:56,bold:true,color:'#17202a'};
+ else{e={id,type:'image',name:uniq('profile'),x:100,y:100,width:300,height:300,shape:t,img:null,file:''};upT=id;$('#file').click()}
+ S.els.push(e);select(id);commit()});
+$('#file').onchange=ev=>{const f=ev.target.files[0];ev.target.value='';if(!f)return;const im=new Image();
+ im.onload=()=>{if(upT==='bg'){S.bg={name:f.name,img:im};S.W=im.naturalWidth;S.H=im.naturalHeight;$('#cw').value=S.W;$('#ch').value=S.H;$('#bgn').textContent=`${f.name} — kanvas disesuaikan ke ${S.W}×${S.H}`;fit()}
+  else{const e=S.els.find(x=>x.id===upT);if(e){e.img=im;e.file=f.name}}draw()};im.src=URL.createObjectURL(f)};
+$('#bgb').onclick=()=>{upT='bg';$('#file').click()};
+$('#bgx').onclick=()=>{S.bg=null;$('#bgn').textContent='';draw()};
+$('#cw').onchange=$('#ch').onchange=()=>{S.W=Math.max(1,Math.round(+$('#cw').value)||S.W);S.H=Math.max(1,Math.round(+$('#ch').value)||S.H);fit();draw();commit()};
+document.addEventListener('keydown',ev=>{if(/INPUT|TEXTAREA|SELECT/.test(ev.target.tagName)||$('#dlg').classList.contains('on'))return;const e=sel();if(!e)return;
+ const s=ev.shiftKey?10:1,m={ArrowLeft:['x',-s],ArrowRight:['x',s],ArrowUp:['y',-s],ArrowDown:['y',s]}[ev.key];
+ if(m){e[m[0]]+=m[1];ev.preventDefault()}else if(ev.key==='Delete'||ev.key==='Backspace'){S.els.splice(S.els.indexOf(e),1);S.sel=null;panel();layers()}else return;commit();sync();draw()});
+
+/* ===== Export ===== */
+function genJSON(){const o={canvas:{width:S.W,height:S.H}};if(S.bgc!=='#ffffff')o.backgroundColor=S.bgc;if(S.bg)o.background=S.bg.name;
+ o.elements=S.els.filter(e=>!e.hide).map(e=>OP(e,e.type==='shape'?{type:'shape',name:e.name,shape:e.shape,x:e.x,y:e.y,width:e.width,height:e.height,fill:e.fill||'#4f6bff',stroke:e.stroke||'#000000',strokeWidth:e.sw||0}:e.type==='text'?{type:'text',name:e.name,content:e.content,x:e.x,y:e.y,font:fnt(e),color:e.color,...(lines(e).length>1?{lineHeight:lhOf(e)}:{})}
+  :{type:'image',name:e.name,x:e.x,y:e.y,width:e.width,height:e.height,shape:e.shape==='ellipse'?'ellipse':'rect'}));
+ return JSON.stringify(o,null,2)}
+const q=t=>/['\\\n]/.test(t)?JSON.stringify(t):`'${t}'`,idn=n=>'img'+n.replace(/(^|_)(\w)/g,(_,a,b)=>b.toUpperCase());
+function genCode(){const L=[],a=s=>L.push(s);GA=0;
+ a("const { createCanvas, loadImage } = require('@napi-rs/canvas');");a("const fs = require('fs');");a('');a('async function render() {');
+ a(`  const canvas = createCanvas(${S.W}, ${S.H});`);a("  const ctx = canvas.getContext('2d');");a('');
+ if(S.bg)a(`  const imgBackground = await loadImage(${q('./'+S.bg.name)});`);
+ S.els.filter(e=>e.type==='image'&&!e.hide).forEach(e=>a(`  const ${idn(e.name)} = await loadImage(${q('./'+(e.file||e.name+'.png'))}); // ganti dengan gambar asli`));
+ a('');if(!S.bg||S.bgc!=='#ffffff'){a('  // Warna latar');a(`  ctx.fillStyle = ${q(S.bgc)};`);a(`  ctx.fillRect(0, 0, ${S.W}, ${S.H});`);a('')}if(S.bg){a('  // Render Background');a(`  ctx.drawImage(imgBackground, 0, 0, ${S.W}, ${S.H});`);a('')}
+ for(const e of S.els){
+  if(e.hide)continue;if(GA){a('  ctx.globalAlpha = 1;');GA=0}const op=(e.op??100)/100;if(op<1){a(`  ctx.globalAlpha = ${op};`);GA=1}
+  if(e.type==='shape')cShape(a,e);else if(e.type==='image'&&(e.flipH||e.flipV||e.bw||(e.radius&&e.shape!=='ellipse')))cImg(a,e);else if(e.type==='text'){a(`  // Render Teks: ${e.name}`);a("  ctx.textAlign = 'left';");a("  ctx.textBaseline = 'top';");a(`  ctx.font = ${q(fnt(e))};`);a(`  ctx.fillStyle = ${q(e.color)};`);
+   if(e.blur||e.shx||e.shy){a(`  ctx.shadowColor = ${q(e.shc||'rgba(0,0,0,0.5)')};`);a(`  ctx.shadowBlur = ${e.blur||0};`);a(`  ctx.shadowOffsetX = ${e.shx||0};`);a(`  ctx.shadowOffsetY = ${e.shy||0};`)}
+   if(e.stw){a(`  ctx.strokeStyle = ${q(e.stc||'#000000')};`);a(`  ctx.lineWidth = ${e.stw};`);a("  ctx.lineJoin = 'round';")}
+   lines(e).forEach((l,i)=>{if(!l)return;const y=e.y+i*lhOf(e);if(e.stw)a(`  ctx.strokeText(${JSON.stringify(l)}, ${e.x}, ${y});`);a(`  ctx.fillText(${JSON.stringify(l)}, ${e.x}, ${y});`)});
+   if(e.blur||e.shx||e.shy)a("  ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;")}
+  else if(e.shape==='ellipse'){const w=e.width,h=e.height;a(`  // Render Gambar (Ellipse): ${e.name}`);a('  ctx.save();');a('  ctx.beginPath();');
+   a(`  ctx.ellipse(${e.x} + (${w}/2), ${e.y} + (${h}/2), ${w}/2, ${h}/2, 0, 0, Math.PI * 2);`);a('  ctx.clip();');a(`  ctx.drawImage(${idn(e.name)}, ${e.x}, ${e.y}, ${w}, ${h});`);a('  ctx.restore();')}
+  else{a(`  // Render Gambar (Kotak): ${e.name}`);a(`  ctx.drawImage(${idn(e.name)}, ${e.x}, ${e.y}, ${e.width}, ${e.height});`)}
+  a('')}
+ if(GA)a('  ctx.globalAlpha = 1;');a("  return canvas.toBuffer('image/png');");a('}');a('');a("render().then(buf => fs.writeFileSync('output.png', buf));");return L.join('\n')}
+function show(t,s,imp){$('#dt').textContent=t;const x=$('#code');x.hidden=false;$('#pv').hidden=true;x.value=s;x.readOnly=!imp;$('#ap').hidden=!imp;$('#cp').hidden=!!imp;$('#dlg').classList.add('on')}
+const OP=(e,r)=>{if((e.op??100)<100)r.opacity=e.op/100;if(e.stw)r.stroke={color:e.stc||'#000000',width:e.stw};if(e.blur||e.shx||e.shy)r.shadow={color:e.shc||'rgba(0,0,0,0.5)',blur:e.blur||0,offsetX:e.shx||0,offsetY:e.shy||0};if(e.radius)r.radius=e.radius;if(e.bw)r.border={color:e.bc||'#000000',width:e.bw};if(e.flipH)r.flipH=true;if(e.flipV)r.flipV=true;return r};
+const PAL=['#000000','#ffffff','#17202a','#e5367a','#f59e0b','#facc15','#22c55e','#06b6d4','#4f6bff','#8b5cf6'];
+function sw(k){return `<div class="full row">${PAL.map(c=>`<button class="sw" data-f="${k}" data-c="${c}" style="background:${c}" title="${c}"></button>`).join('')}</div>`}
+const SHP=e=>`${N('Sudut membulat','radius',e.radius||0)}${N('Garis tepi (px)','sw',e.sw||0)}<label>Warna isi<input data-k="fill" type="color" value="${e.fill||'#4f6bff'}"></label><label>Warna garis<input data-k="stroke" type="color" value="${e.stroke||'#000000'}"></label>${sw('fill')}`;
+const IMG=e=>`<div class="full row"><button data-act="img">Ganti gambar</button><button data-act="fit">Isi kanvas</button><button data-act="nat">Ukuran asli</button><button data-act="fh">Balik kiri-kanan</button><button data-act="fv">Balik atas-bawah</button></div>${N('Sudut membulat','radius',e.radius||0)}${N('Border (px)','bw',e.bw||0)}<label>Warna border<input data-k="bc" type="color" value="${e.bc||'#000000'}"></label>`;
+const starPts=e=>{const cx=e.x+e.width/2,cy=e.y+e.height/2,P=[];for(let i=0;i<10;i++){const g=-Math.PI/2+i*Math.PI/5,r=i%2?.4:1;P.push([+(cx+Math.cos(g)*e.width/2*r).toFixed(1),+(cy+Math.sin(g)*e.height/2*r).toFixed(1)])}return P};
+function trace(c,e){const x=e.x,y=e.y,w=e.width,h=e.height,r=Math.min(e.radius||0,w/2,h/2),k=e.shape;c.beginPath();
+ if(k==='ellipse')c.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,Math.PI*2);
+ else if(k==='tri'){c.moveTo(x+w/2,y);c.lineTo(x+w,y+h);c.lineTo(x,y+h);c.closePath()}
+ else if(k==='star'){starPts(e).forEach((q,i)=>i?c.lineTo(q[0],q[1]):c.moveTo(q[0],q[1]));c.closePath()}
+ else if(r){c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
+ else c.rect(x,y,w,h)}
+function pathLines(e){const x=e.x,y=e.y,w=e.width,h=e.height,r=Math.min(e.radius||0,w/2,h/2),k=e.shape;
+ if(k==='ellipse')return[`ctx.ellipse(${x} + (${w}/2), ${y} + (${h}/2), ${w}/2, ${h}/2, 0, 0, Math.PI * 2);`];
+ if(k==='tri')return[`ctx.moveTo(${x+w/2}, ${y});`,`ctx.lineTo(${x+w}, ${y+h});`,`ctx.lineTo(${x}, ${y+h});`,'ctx.closePath();'];
+ if(k==='star')return starPts(e).map((q,i)=>`ctx.${i?'lineTo':'moveTo'}(${q[0]}, ${q[1]});`).concat('ctx.closePath();');
+ if(r)return[`ctx.moveTo(${x+r}, ${y});`,`ctx.arcTo(${x+w}, ${y}, ${x+w}, ${y+h}, ${r});`,`ctx.arcTo(${x+w}, ${y+h}, ${x}, ${y+h}, ${r});`,`ctx.arcTo(${x}, ${y+h}, ${x}, ${y}, ${r});`,`ctx.arcTo(${x}, ${y}, ${x+w}, ${y}, ${r});`,'ctx.closePath();'];
+ return[`ctx.rect(${x}, ${y}, ${w}, ${h});`]}
+function drawShape(c,e){trace(c,e);c.fillStyle=e.fill||'#4f6bff';c.fill();if(e.sw){c.strokeStyle=e.stroke||'#000000';c.lineWidth=e.sw;c.lineJoin='round';c.stroke()}}
+function border(c,e){trace(c,e);c.strokeStyle=e.bc||'#000000';c.lineWidth=e.bw;c.stroke()}
+function cShape(a,e){a(`  // Render Bentuk (${e.shape}): ${e.name}`);a('  ctx.beginPath();');pathLines(e).forEach(l=>a('  '+l));a(`  ctx.fillStyle = ${q(e.fill||'#4f6bff')};`);a('  ctx.fill();');
+ if(e.sw){a(`  ctx.strokeStyle = ${q(e.stroke||'#000000')};`);a(`  ctx.lineWidth = ${e.sw};`);a("  ctx.lineJoin = 'round';");a('  ctx.stroke();')}}
+function cImg(a,e){const w=e.width,h=e.height;a(`  // Render Gambar: ${e.name}`);a('  ctx.save();');
+ if(e.shape==='ellipse'||e.radius){a('  ctx.beginPath();');pathLines(e).forEach(l=>a('  '+l));a('  ctx.clip();')}
+ if(e.flipH||e.flipV){a(`  ctx.translate(${e.x+(e.flipH?w:0)}, ${e.y+(e.flipV?h:0)});`);a(`  ctx.scale(${e.flipH?-1:1}, ${e.flipV?-1:1});`);a(`  ctx.translate(${-e.x}, ${-e.y});`)}
+ a(`  ctx.drawImage(${idn(e.name)}, ${e.x}, ${e.y}, ${w}, ${h});`);a('  ctx.restore();');
+ if(e.bw){a('  ctx.beginPath();');pathLines(e).forEach(l=>a('  '+l));a(`  ctx.strokeStyle = ${q(e.bc||'#000000')};`);a(`  ctx.lineWidth = ${e.bw};`);a('  ctx.stroke();')}}
+function prev(){NOOV=1;draw();const u=cv.toDataURL('image/png');NOOV=0;draw();show('Preview: tekan lama gambar untuk menyimpan','');$('#code').hidden=true;$('#cp').hidden=true;const p=$('#pv');p.src=u;p.hidden=false}
+function impJ(t){const o=JSON.parse(t);if(!o.canvas||!Array.isArray(o.elements))throw new Error('wajib ada "canvas" dan "elements"');
+ const els=o.elements.map(x=>{const id=++S.n,op=x.opacity!=null?Math.round(x.opacity*100):100;
+  if(x.type==='text'){const m=/^(italic )?(bold )?(\d+(?:\.\d+)?)px (.+)$/.exec(x.font||'')||[];return{id,type:'text',name:String(x.name||'text'+id),content:String(x.content??''),x:+x.x||0,y:+x.y||0,family:(m[4]||'Arial').replace(/^"|"$/g,''),size:+m[3]||48,bold:!!m[2],italic:!!m[1],color:x.color||'#000000',lh:x.lineHeight,op,stw:x.stroke?.width,stc:x.stroke?.color,blur:x.shadow?.blur,shc:x.shadow?.color,shx:x.shadow?.offsetX,shy:x.shadow?.offsetY}}
+  if(x.type==='image')return{id,type:'image',name:String(x.name||'profile'+id),x:+x.x||0,y:+x.y||0,width:+x.width||100,height:+x.height||100,shape:x.shape==='ellipse'?'ellipse':'rect',img:null,file:'',op,radius:x.radius,bw:x.border?.width,bc:x.border?.color,flipH:x.flipH,flipV:x.flipV};
+  if(x.type==='shape')return{id,type:'shape',shape:x.shape||'rect',name:String(x.name||'bentuk'+id),x:+x.x||0,y:+x.y||0,width:+x.width||100,height:+x.height||100,fill:x.fill,stroke:x.stroke,sw:x.strokeWidth,radius:x.radius,op};
+  throw new Error('type tidak dikenal: '+x.type)});
+ S.W=+o.canvas.width||S.W;S.H=+o.canvas.height||S.H;S.els=els;S.sel=null;S.bg=null;S.bgc=o.backgroundColor||'#ffffff';$('#bgc').value=S.bgc;$('#cw').value=S.W;$('#ch').value=S.H;
+ $('#bgn').textContent=o.background?'Background di JSON: '+o.background+' (upload ulang gambarnya)':'';fit();layers();panel();draw();commit()}
+$('#eJ').onclick=()=>show('Export JSON',genJSON());$('#eC').onclick=()=>show('Export Node.js Code',genCode());
+$('#cl').onclick=()=>$('#dlg').classList.remove('on');
+$('#cp').onclick=()=>{const t=$('#code'),b=$('#cp'),ok=()=>{b.textContent='Tersalin';setTimeout(()=>b.textContent='Salin',1300)};
+ const fb=()=>{t.select();try{document.execCommand('copy');ok()}catch(e){b.textContent='Pilih manual (Ctrl+C)'}};
+ navigator.clipboard?navigator.clipboard.writeText(t.value).then(ok,fb):fb()};
+
+/* ===== Awal ===== */
+$('#cw').value=S.W;$('#ch').value=S.H;
+S.els.push({id:++S.n,type:'text',name:'player1',content:'Budi',x:200,y:600,family:'Arial',size:56,bold:true,color:'#17202a'},
+ {id:++S.n,type:'image',name:'profile',x:892,y:948,width:215,height:221,shape:'ellipse',img:null,file:''});
+new ResizeObserver(()=>{fit();draw()}).observe($('#stage'));
+commit();fit();layers();panel();draw();
+$('#iJ').onclick=()=>show('Import JSON: tempel JSON lalu tekan Terapkan','',true);
+$('#ap').onclick=()=>{try{impJ($('#code').value);$('#dlg').classList.remove('on')}catch(err){$('#dt').textContent='JSON tidak valid: '+err.message}};
+$('#pre').onchange=()=>{const v=$('#pre').value;if(!v)return;[S.W,S.H]=v.split('x').map(Number);$('#cw').value=S.W;$('#ch').value=S.H;$('#pre').value='';fit();draw();commit()};
+const zm=f=>{ZM=Math.min(8,Math.max(.2,f?ZM*f:1));fit();draw()};
+$('#zi').onclick=()=>zm(1.25);$('#zo').onclick=()=>zm(.8);$('#zf').onclick=()=>zm(0);
+$('#stage').addEventListener('wheel',ev=>{if(ev.ctrlKey){ev.preventDefault();zm(ev.deltaY<0?1.1:.9)}},{passive:false});
+$('#tb').addEventListener('change',()=>draw());
+$('#ash').onchange=()=>{const v=$('#ash').value;$('#ash').value='';if(!v)return;const id=++S.n;S.els.push({id,type:'shape',shape:v,name:uniq('bentuk'),x:100,y:100,width:v==='tri'?300:240,height:240,fill:'#4f6bff',stroke:'#000000',sw:0,radius:0});select(id);commit()};
+$('#pv0').onclick=prev;
+/* ===== Preset & CanvasAPI (untuk bot) ===== */
+const PK='canvas-presets',ldi=u=>new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=()=>no(new Error('gambar gagal dimuat'));i.src=u});
+const pget=()=>{try{return JSON.parse(localStorage.getItem(PK)||'{}')}catch(e){return{}}},pput=o=>{try{localStorage.setItem(PK,JSON.stringify(o));return true}catch(e){return false}};
+function bgData(){if(!S.bg)return null;const t=document.createElement('canvas');t.width=S.bg.img.naturalWidth;t.height=S.bg.img.naturalHeight;t.getContext('2d').drawImage(S.bg.img,0,0);try{return t.toDataURL(/png$/i.test(S.bg.name)?'image/png':'image/jpeg',.92)}catch(e){return null}}
+function plist(){const P=pget();$('#pl').innerHTML=Object.keys(P).map(k=>{const d=JSON.parse(P[k].design).elements,T=d.filter(e=>e.type==='text').map(e=>e.name),I=d.filter(e=>e.type==='image').map(e=>e.name);
+ return `<div class="pi"><b>${esc(k)}<small>teks: ${esc(T.join(', ')||'-')} | gambar: ${esc(I.join(', ')||'-')}</small></b><button data-pl="${esc(k)}">Muat</button><button data-pd="${esc(k)}">Hapus</button></div>`}).join('')||'<p class="mu">Belum ada preset.</p>'}
+$('#ps').onclick=()=>{const n=$('#pn').value.trim();if(!n){$('#pn').focus();return}const P=pget();P[n]={design:genJSON(),bg:bgData()};
+ if(!pput(P)){P[n].bg=null;if(!pput(P)){show('Preset','Penyimpanan browser penuh. Hapus preset lama atau pakai Export JSON.');return}show('Preset','Preset disimpan tanpa gambar background karena ukurannya terlalu besar untuk penyimpanan browser.')}plist()};
+$('#pl').onclick=async ev=>{const P=pget(),l=ev.target.dataset.pl,d=ev.target.dataset.pd;if(d){delete P[d];pput(P);plist();return}
+ if(l&&P[l]){impJ(P[l].design);$('#pn').value=l;if(P[l].bg){S.bg={name:JSON.parse(P[l].design).background||'background',img:await ldi(P[l].bg)};$('#bgn').textContent=S.bg.name;draw()}}};
+$('#pa').onclick=()=>{const P=pget(),o={presets:{}};for(const k in P){o.presets[k]={design:JSON.parse(P[k].design)};if($('#pbg').checked&&P[k].bg)o.presets[k].background=P[k].bg}show('Preset pack (JSON)',JSON.stringify(o,null,2))};
+const DOC=`// 1) Simpan file editor-canvas-bot.html di server bot. 2) npm i puppeteer
+const puppeteer = require('puppeteer');
+const fs = require('fs');
+const pack = JSON.parse(fs.readFileSync('./preset-pack.json', 'utf8'));
+
+let page;
+async function init() {
+  const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+  page = await browser.newPage();
+  await page.goto('file://' + require('path').resolve('./editor-canvas-bot.html'));
+  await page.waitForFunction(() => window.CanvasAPI && window.CanvasAPI.ready);
+}
+
+// teks = { namaElemenTeks: 'isi baru' }, images = { namaElemenGambar: Buffer }
+async function renderPreset(name, texts, images, bgBuffer) {
+  const p = pack.presets[name];
+  const imgs = {};
+  for (const k in images) imgs[k] = 'data:image/png;base64,' + images[k].toString('base64');
+  const dataUrl = await page.evaluate(o => window.CanvasAPI.render(o), {
+    design: p.design,
+    background: p.background || (bgBuffer ? 'data:image/png;base64,' + bgBuffer.toString('base64') : undefined),
+    texts, images: imgs, format: 'png'
+  });
+  return Buffer.from(dataUrl.split(',')[1], 'base64'); // kirim buffer ini lewat bot
+}`;
+$('#pg').onclick=()=>show('Panduan CanvasAPI (untuk bot)',DOC);
+window.CanvasAPI={ready:true,async render(o){impJ(typeof o.design==='string'?o.design:JSON.stringify(o.design));
+ for(const e of S.els){if(e.type==='text'&&o.texts&&e.name in o.texts)e.content=String(o.texts[e.name]);if(e.type==='image'&&o.images&&o.images[e.name])e.img=await ldi(o.images[e.name])}
+ if(o.background)S.bg={name:'background',img:await ldi(o.background)};if(document.fonts)await document.fonts.ready;
+ NOOV=1;draw();const u=cv.toDataURL(o.format==='jpeg'?'image/jpeg':'image/png');NOOV=0;draw();return u}};
+plist();
+$('#bgc').oninput=()=>{S.bgc=$('#bgc').value;draw()};
+$('#pp').addEventListener('click',ev=>{const t=ev.target,e=sel();if(!t.dataset.c||!e)return;e[t.dataset.f]=t.dataset.c;const i=$(`#pp [data-k="${t.dataset.f}"]`);if(i)i.value=t.dataset.c;draw();commit()});
+$('#un').onclick=()=>go(-1);$('#re').onclick=()=>go(1);
+document.addEventListener('keydown',ev=>{if(!(ev.ctrlKey||ev.metaKey)||/INPUT|TEXTAREA|SELECT/.test(ev.target.tagName))return;const k=ev.key.toLowerCase();if(k==='z'){go(ev.shiftKey?1:-1);ev.preventDefault()}else if(k==='y'){go(1);ev.preventDefault()}});
+</script></body></html>
